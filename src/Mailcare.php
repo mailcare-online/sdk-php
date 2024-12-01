@@ -22,17 +22,26 @@ class Mailcare
         ]);
     }
 
-    public function sendTransactionalEmail(string $to, string $transactionalUid, array $variables): void
+    private function validateVariables(array $variables): void
     {
-        foreach ($variables as $key => $value) {
-            if (!is_scalar($value) && !is_array($value)) {
+        foreach ($variables as $value) {
+            if (is_array($value)) {
+                $this->validateVariables($value);
+            } elseif (!is_scalar($value)) {
                 throw new \InvalidArgumentException('All values should be scalar or arrays recursively.');
             }
         }
+    }
+
+    public function sendTransactionalEmail(
+        string $to, string $transactionalAlias, string $templateAlias, array $variables
+    ): void {
+        $this->validateVariables($variables);
 
         $data = [
             'to' => $to,
-            'transactional_uid' => $transactionalUid,
+            'transactional_alias' => $transactionalAlias,
+            'template_alias' => $templateAlias,
             'variables' => $variables
         ];
 
@@ -44,4 +53,5 @@ class Mailcare
             throw new \RuntimeException('API call failed: ' . $e->getMessage());
         }
     }
+
 }
